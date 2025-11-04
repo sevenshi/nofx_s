@@ -31,11 +31,11 @@ type FuturesTrader struct {
 
 // NewFuturesTrader 创建合约交易器
 func NewFuturesTrader(apiKey, secretKey string) *FuturesTrader {
+	futures.UseTestnet = true
 	client := futures.NewClient(apiKey, secretKey)
 	return &FuturesTrader{
-		client:          client,
-		cacheDuration:   15 * time.Second, // 15秒缓存
-		binance_testnet: true,
+		client:        client,
+		cacheDuration: 15 * time.Second, // 15秒缓存
 	}
 }
 
