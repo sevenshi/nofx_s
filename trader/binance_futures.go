@@ -33,9 +33,9 @@ type FuturesTrader struct {
 func NewFuturesTrader(apiKey, secretKey string) *FuturesTrader {
 	client := futures.NewClient(apiKey, secretKey)
 	return &FuturesTrader{
-		client:        client,
-		cacheDuration: 15 * time.Second, // 15秒缓存
-		client.BaseURL: "https://testnet.binancefuture.com"
+		client:         client,
+		cacheDuration:  15 * time.Second, // 15秒缓存
+		client.BaseURL: "https://testnet.binancefuture.com",
 	}
 }
 
