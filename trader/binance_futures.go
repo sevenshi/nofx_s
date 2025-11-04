@@ -35,6 +35,7 @@ func NewFuturesTrader(apiKey, secretKey string) *FuturesTrader {
 	return &FuturesTrader{
 		client:        client,
 		cacheDuration: 15 * time.Second, // 15秒缓存
+		client.BaseURL = "https://testnet.binancefuture.com"
 	}
 }
 
