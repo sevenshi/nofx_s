@@ -392,17 +392,47 @@ func (t *FuturesTrader) CloseLong(symbol string, quantity float64) (map[string]i
 		return nil, err
 	}
 
-	// 创建市价卖出订单（平多）
-	order, err := t.client.NewCreateOrderService().
+	// 创建订单服务
+	orderService := t.client.NewCreateOrderService().
 		Symbol(symbol).
 		Side(futures.SideTypeSell).
-		PositionSide(futures.PositionSideTypeLong).
 		Type(futures.OrderTypeMarket).
-		Quantity(quantityStr).
-		Do(context.Background())
+		Quantity(quantityStr)
+
+	// 检查是否已有持仓，决定是否指定PositionSide
+	positions, err := t.GetPositions()
+	if err == nil {
+		hasPosition := false
+		for _, pos := range positions {
+			if pos["symbol"] == symbol {
+				hasPosition = true
+				break
+			}
+		}
+		// 如果没有持仓，尝试使用双向持仓模式
+		if !hasPosition {
+			orderService = orderService.PositionSide(futures.PositionSideTypeLong)
+		}
+		// 如果有持仓，不指定PositionSide（让系统自动处理单向持仓模式）
+	}
+
+	order, err := orderService.Do(context.Background())
 
 	if err != nil {
-		return nil, fmt.Errorf("平多仓失败: %w", err)
+		// 如果错误是仓位方向不匹配，尝试不指定PositionSide重试
+		if strings.Contains(err.Error(), "position side does not match user's setting") {
+			log.Printf("  ⚠ 检测到单向持仓模式，重新尝试平多仓（不指定PositionSide）")
+			order, err = t.client.NewCreateOrderService().
+				Symbol(symbol).
+				Side(futures.SideTypeSell).
+				Type(futures.OrderTypeMarket).
+				Quantity(quantityStr).
+				Do(context.Background())
+		}
+		
+		if err != nil {
+			return nil, fmt.Errorf("平多仓失败: %w", err)
+		}
 	}
 
 	log.Printf("✓ 平多仓成功: %s 数量: %s", symbol, quantityStr)
@@ -446,17 +476,47 @@ func (t *FuturesTrader) CloseShort(symbol string, quantity float64) (map[string]
 		return nil, err
 	}
 
-	// 创建市价买入订单（平空）
-	order, err := t.client.NewCreateOrderService().
+	// 创建订单服务
+	orderService := t.client.NewCreateOrderService().
 		Symbol(symbol).
 		Side(futures.SideTypeBuy).
-		PositionSide(futures.PositionSideTypeShort).
 		Type(futures.OrderTypeMarket).
-		Quantity(quantityStr).
-		Do(context.Background())
+		Quantity(quantityStr)
+
+	// 检查是否已有持仓，决定是否指定PositionSide
+	positions, err := t.GetPositions()
+	if err == nil {
+		hasPosition := false
+		for _, pos := range positions {
+			if pos["symbol"] == symbol {
+				hasPosition = true
+				break
+			}
+		}
+		// 如果没有持仓，尝试使用双向持仓模式
+		if !hasPosition {
+			orderService = orderService.PositionSide(futures.PositionSideTypeShort)
+		}
+		// 如果有持仓，不指定PositionSide（让系统自动处理单向持仓模式）
+	}
+
+	order, err := orderService.Do(context.Background())
 
 	if err != nil {
-		return nil, fmt.Errorf("平空仓失败: %w", err)
+		// 如果错误是仓位方向不匹配，尝试不指定PositionSide重试
+		if strings.Contains(err.Error(), "position side does not match user's setting") {
+			log.Printf("  ⚠ 检测到单向持仓模式，重新尝试平空仓（不指定PositionSide）")
+			order, err = t.client.NewCreateOrderService().
+				Symbol(symbol).
+				Side(futures.SideTypeBuy).
+				Type(futures.OrderTypeMarket).
+				Quantity(quantityStr).
+				Do(context.Background())
+		}
+		
+		if err != nil {
+			return nil, fmt.Errorf("平空仓失败: %w", err)
+		}
 	}
 
 	log.Printf("✓ 平空仓成功: %s 数量: %s", symbol, quantityStr)
