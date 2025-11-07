@@ -623,8 +623,17 @@ func (at *AutoTrader) executeOpenLongWithRecord(decision *decision.Decision, act
 
 	// 计算数量
 	quantity := decision.PositionSizeUSD / marketData.CurrentPrice
-	actionRecord.Quantity = quantity
 	actionRecord.Price = marketData.CurrentPrice
+
+	// ⚠️ 关键：检查保证金是否足够，支持智能调整
+	adjustedQuantity, err := at.checkMarginSufficiency(decision.Symbol, quantity, decision.Leverage, marketData.CurrentPrice)
+	if err != nil {
+		return fmt.Errorf("❌ 保证金不足，拒绝开仓: %w", err)
+	}
+	
+	// 使用调整后的数量
+	quantity = adjustedQuantity
+	actionRecord.Quantity = quantity
 
 	// 设置仓位模式
 	if err := at.trader.SetMarginMode(decision.Symbol, at.config.IsCrossMargin); err != nil {
@@ -685,10 +694,15 @@ func (at *AutoTrader) executeOpenShortWithRecord(decision *decision.Decision, ac
 	actionRecord.Quantity = quantity
 	actionRecord.Price = marketData.CurrentPrice
 
-	// ⚠️ 关键：检查保证金是否足够
-	if err := at.checkMarginSufficiency(decision.Symbol, quantity, decision.Leverage, marketData.CurrentPrice); err != nil {
+	// ⚠️ 关键：检查保证金是否足够，支持智能调整
+	adjustedQuantity, err := at.checkMarginSufficiency(decision.Symbol, quantity, decision.Leverage, marketData.CurrentPrice)
+	if err != nil {
 		return fmt.Errorf("❌ 保证金不足，拒绝开仓: %w", err)
 	}
+	
+	// 使用调整后的数量
+	quantity = adjustedQuantity
+	actionRecord.Quantity = quantity
 
 	// 设置仓位模式
 	if err := at.trader.SetMarginMode(decision.Symbol, at.config.IsCrossMargin); err != nil {
