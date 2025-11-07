@@ -265,11 +265,10 @@ func buildSystemPrompt(accountEquity float64, btcEthLeverage, altcoinLeverage in
 	sb.WriteString("1. 风险回报比: 必须 ≥ 1:3（冒1%风险，赚3%+收益）\n")
 	sb.WriteString("2. 最多持仓: 3个币种（质量>数量）\n")
 	sb.WriteString(fmt.Sprintf("3. 单币仓位: 山寨%.0f-%.0f U | BTC/ETH %.0f-%.0f U\n",
-		accountEquity*1.2, accountEquity*1.5, accountEquity*2.5, accountEquity*5))
+		accountEquity*0.8, accountEquity*1.5, accountEquity*3, accountEquity*6))
 	sb.WriteString(fmt.Sprintf("4. 杠杆限制: **山寨币最大%dx杠杆** | **BTC/ETH最大%dx杠杆** (⚠️ 严格执行，不可超过)\n", altcoinLeverage, btcEthLeverage))
-	sb.WriteString("5. 单笔仓位: 不超过总仓位的50%（分散风险）\n")
-	sb.WriteString("6. 保证金: 总使用率 ≤ 90%（含10%安全边际）\n")
-	sb.WriteString("7. 实际可用余额: 请确保生成的仓位规模不超过实际可用余额的95%\n\n")
+	sb.WriteString("5. 保证金: 总使用率 ≤ 90%\n")
+	sb.WriteString("6. 开仓金额: 建议 **≥12 USDT** (交易所最小名义价值 10 USDT + 安全边际)\n\n")
 
 	// 3. 输出格式 - 动态生成
 	sb.WriteString("#输出格式\n\n")
