@@ -624,15 +624,6 @@ func (at *AutoTrader) executeOpenLongWithRecord(decision *decision.Decision, act
 	// 计算数量
 	quantity := decision.PositionSizeUSD / marketData.CurrentPrice
 	actionRecord.Price = marketData.CurrentPrice
-
-	// ⚠️ 关键：检查保证金是否足够，支持智能调整
-	adjustedQuantity, err := at.checkMarginSufficiency(decision.Symbol, quantity, decision.Leverage, marketData.CurrentPrice)
-	if err != nil {
-		return fmt.Errorf("❌ 保证金不足，拒绝开仓: %w", err)
-	}
-	
-	// 使用调整后的数量
-	quantity = adjustedQuantity
 	actionRecord.Quantity = quantity
 
 	// 设置仓位模式
@@ -693,16 +684,6 @@ func (at *AutoTrader) executeOpenShortWithRecord(decision *decision.Decision, ac
 	quantity := decision.PositionSizeUSD / marketData.CurrentPrice
 	actionRecord.Quantity = quantity
 	actionRecord.Price = marketData.CurrentPrice
-
-	// ⚠️ 关键：检查保证金是否足够，支持智能调整
-	adjustedQuantity, err := at.checkMarginSufficiency(decision.Symbol, quantity, decision.Leverage, marketData.CurrentPrice)
-	if err != nil {
-		return fmt.Errorf("❌ 保证金不足，拒绝开仓: %w", err)
-	}
-	
-	// 使用调整后的数量
-	quantity = adjustedQuantity
-	actionRecord.Quantity = quantity
 
 	// 设置仓位模式
 	if err := at.trader.SetMarginMode(decision.Symbol, at.config.IsCrossMargin); err != nil {
@@ -1099,57 +1080,4 @@ func normalizeSymbol(symbol string) string {
 	}
 
 	return symbol
-}
-
-// checkMarginSufficiency 检查保证金是否足够支持开仓，支持智能调整
-func (at *AutoTrader) checkMarginSufficiency(symbol string, quantity float64, leverage int, price float64) (float64, error) {
-	// 获取账户信息
-	accountInfo, err := at.GetAccountInfo()
-	if err != nil {
-		return quantity, fmt.Errorf("获取账户信息失败: %w", err)
-	}
-
-	// 提取可用余额
-	availableBalance, ok := accountInfo["available_balance"].(float64)
-	if !ok {
-		return quantity, fmt.Errorf("无法获取可用余额信息")
-	}
-
-	// 计算所需保证金：所需保证金 = (数量 × 价格) / 杠杆
-	requiredMargin := (quantity * price) / float64(leverage)
-	
-	// 添加5%的安全边际（从10%降低到5%，提高资金利用率）
-	requiredMarginWithSafety := requiredMargin * 1.05
-
-	// 检查保证金是否足够
-	if availableBalance >= requiredMarginWithSafety {
-		log.Printf("  ✓ 保证金检查通过: 可用余额%.2f USDT ≥ 所需保证金%.2f USDT", 
-			availableBalance, requiredMarginWithSafety)
-		return quantity, nil
-	}
-
-	// 保证金不足，尝试智能调整仓位大小
-	log.Printf("  ⚠️ 保证金不足: 可用余额%.2f USDT < 所需保证金%.2f USDT", 
-		availableBalance, requiredMarginWithSafety)
-
-	// 计算最大可开仓数量
-	maxQuantity := (availableBalance * float64(leverage)) / (price * 1.05)
-	
-	// 确保最小交易数量（避免过小的仓位）
-	minQuantity := 0.001 // 最小交易数量为0.001
-	if maxQuantity < minQuantity {
-		return 0, fmt.Errorf("❌ 保证金严重不足: 最大可开仓数量%.6f < 最小交易数量%.3f", 
-			maxQuantity, minQuantity)
-	}
-
-	// 如果调整后的仓位太小（小于原计划的20%），则拒绝开仓
-	if maxQuantity < quantity*0.2 {
-		return 0, fmt.Errorf("❌ 保证金不足: 最大可开仓数量%.4f仅为原计划%.4f的%.1f%%，仓位过小", 
-			maxQuantity, quantity, (maxQuantity/quantity)*100)
-	}
-
-	log.Printf("  🔄 智能调整仓位: 从%.4f调整为%.4f (%.1f%%)", 
-		quantity, maxQuantity, (maxQuantity/quantity)*100)
-	
-	return maxQuantity, nil
 }
