@@ -1086,3 +1086,34 @@ func normalizeSymbol(symbol string) string {
 
 	return symbol
 }
+
+// checkMarginSufficiency 检查保证金是否足够支持开仓
+func (at *AutoTrader) checkMarginSufficiency(symbol string, quantity float64, leverage int, price float64) error {
+	// 获取账户信息
+	accountInfo, err := at.GetAccountInfo()
+	if err != nil {
+		return fmt.Errorf("获取账户信息失败: %w", err)
+	}
+
+	// 提取可用余额
+	availableBalance, ok := accountInfo["available_balance"].(float64)
+	if !ok {
+		return fmt.Errorf("无法获取可用余额信息")
+	}
+
+	// 计算所需保证金：所需保证金 = (数量 × 价格) / 杠杆
+	requiredMargin := (quantity * price) / float64(leverage)
+	
+	// 添加10%的安全边际
+	requiredMarginWithSafety := requiredMargin * 1.1
+
+	// 检查保证金是否足够
+	if availableBalance < requiredMarginWithSafety {
+		return fmt.Errorf("可用余额%.2f USDT < 所需保证金%.2f USDT (含10%%安全边际)", 
+			availableBalance, requiredMarginWithSafety)
+	}
+
+	log.Printf("  ✓ 保证金检查通过: 可用余额%.2f USDT ≥ 所需保证金%.2f USDT", 
+		availableBalance, requiredMarginWithSafety)
+	return nil
+}
