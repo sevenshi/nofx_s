@@ -685,6 +685,11 @@ func (at *AutoTrader) executeOpenShortWithRecord(decision *decision.Decision, ac
 	actionRecord.Quantity = quantity
 	actionRecord.Price = marketData.CurrentPrice
 
+	// ⚠️ 关键：检查保证金是否足够
+	if err := at.checkMarginSufficiency(decision.Symbol, quantity, decision.Leverage, marketData.CurrentPrice); err != nil {
+		return fmt.Errorf("❌ 保证金不足，拒绝开仓: %w", err)
+	}
+
 	// 设置仓位模式
 	if err := at.trader.SetMarginMode(decision.Symbol, at.config.IsCrossMargin); err != nil {
 		log.Printf("  ⚠️ 设置仓位模式失败: %v", err)
