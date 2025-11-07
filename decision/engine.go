@@ -266,7 +266,7 @@ func buildSystemPrompt(accountEquity float64, btcEthLeverage, altcoinLeverage in
 	sb.WriteString("2. 最多持仓: 3个币种（质量>数量）\n")
 	sb.WriteString(fmt.Sprintf("3. 单币仓位: 山寨%.0f-%.0f U(%dx杠杆) | BTC/ETH %.0f-%.0f U(%dx杠杆)\n",
 		accountEquity*0.8, accountEquity*1.5, altcoinLeverage, accountEquity*5, accountEquity*10, btcEthLeverage))
-	sb.WriteString("4. 保证金: 总使用率 ≤ 90%\n\n")
+	sb.WriteString("4. 保证金: 总使用率 ≤ 90%（含10%安全边际）\n\n")
 
 	// 3. 输出格式 - 动态生成
 	sb.WriteString("#输出格式\n\n")
