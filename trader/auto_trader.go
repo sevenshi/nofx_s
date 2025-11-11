@@ -649,12 +649,16 @@ func (at *AutoTrader) executeOpenLongWithRecord(decision *decision.Decision, act
 	posKey := decision.Symbol + "_long"
 	at.positionFirstSeenTime[posKey] = time.Now().UnixMilli()
 
-	// 设置止损止盈
-	if err := at.trader.SetStopLoss(decision.Symbol, "LONG", quantity, decision.StopLoss); err != nil {
-		log.Printf("  ⚠ 设置止损失败: %v", err)
+	// 设置止损止盈（重试机制）
+	if err := at.setStopLossWithRetry(decision.Symbol, "LONG", quantity, decision.StopLoss); err != nil {
+		log.Printf("  ❌ 设置止损失败，交易继续但无止损保护: %v", err)
+	} else {
+		log.Printf("  ✅ 止损设置成功: %.4f", decision.StopLoss)
 	}
-	if err := at.trader.SetTakeProfit(decision.Symbol, "LONG", quantity, decision.TakeProfit); err != nil {
-		log.Printf("  ⚠ 设置止盈失败: %v", err)
+	if err := at.setTakeProfitWithRetry(decision.Symbol, "LONG", quantity, decision.TakeProfit); err != nil {
+		log.Printf("  ❌ 设置止盈失败，交易继续但无止盈保护: %v", err)
+	} else {
+		log.Printf("  ✅ 止盈设置成功: %.4f", decision.TakeProfit)
 	}
 
 	return nil
@@ -708,12 +712,16 @@ func (at *AutoTrader) executeOpenShortWithRecord(decision *decision.Decision, ac
 	posKey := decision.Symbol + "_short"
 	at.positionFirstSeenTime[posKey] = time.Now().UnixMilli()
 
-	// 设置止损止盈
-	if err := at.trader.SetStopLoss(decision.Symbol, "SHORT", quantity, decision.StopLoss); err != nil {
-		log.Printf("  ⚠ 设置止损失败: %v", err)
+	// 设置止损止盈（重试机制）
+	if err := at.setStopLossWithRetry(decision.Symbol, "SHORT", quantity, decision.StopLoss); err != nil {
+		log.Printf("  ❌ 设置止损失败，交易继续但无止损保护: %v", err)
+	} else {
+		log.Printf("  ✅ 止损设置成功: %.4f", decision.StopLoss)
 	}
-	if err := at.trader.SetTakeProfit(decision.Symbol, "SHORT", quantity, decision.TakeProfit); err != nil {
-		log.Printf("  ⚠ 设置止盈失败: %v", err)
+	if err := at.setTakeProfitWithRetry(decision.Symbol, "SHORT", quantity, decision.TakeProfit); err != nil {
+		log.Printf("  ❌ 设置止盈失败，交易继续但无止盈保护: %v", err)
+	} else {
+		log.Printf("  ✅ 止盈设置成功: %.4f", decision.TakeProfit)
 	}
 
 	return nil
@@ -768,6 +776,56 @@ func (at *AutoTrader) executeCloseShortWithRecord(decision *decision.Decision, a
 	}
 
 	log.Printf("  ✓ 平仓成功")
+	return nil
+}
+
+// setStopLossWithRetry 带重试机制的止损设置
+func (at *AutoTrader) setStopLossWithRetry(symbol string, positionSide string, quantity, stopPrice float64) error {
+	maxRetries := 3
+	retryDelay := 2 * time.Second
+	
+	for i := 0; i < maxRetries; i++ {
+		err := at.trader.SetStopLoss(symbol, positionSide, quantity, stopPrice)
+		if err == nil {
+			return nil // 成功
+		}
+		
+		log.Printf("  ⚠ 止损设置失败 (尝试 %d/%d): %v", i+1, maxRetries, err)
+		
+		// 最后一次尝试失败，返回错误
+		if i == maxRetries-1 {
+			return fmt.Errorf("止损设置失败，已重试%d次: %v", maxRetries, err)
+		}
+		
+		// 等待后重试
+		time.Sleep(retryDelay)
+	}
+	
+	return nil
+}
+
+// setTakeProfitWithRetry 带重试机制的止盈设置
+func (at *AutoTrader) setTakeProfitWithRetry(symbol string, positionSide string, quantity, takeProfitPrice float64) error {
+	maxRetries := 3
+	retryDelay := 2 * time.Second
+	
+	for i := 0; i < maxRetries; i++ {
+		err := at.trader.SetTakeProfit(symbol, positionSide, quantity, takeProfitPrice)
+		if err == nil {
+			return nil // 成功
+		}
+		
+		log.Printf("  ⚠ 止盈设置失败 (尝试 %d/%d): %v", i+1, maxRetries, err)
+		
+		// 最后一次尝试失败，返回错误
+		if i == maxRetries-1 {
+			return fmt.Errorf("止盈设置失败，已重试%d次: %v", maxRetries, err)
+		}
+		
+		// 等待后重试
+		time.Sleep(retryDelay)
+	}
+	
 	return nil
 }
 
