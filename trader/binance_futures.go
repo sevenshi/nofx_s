@@ -605,6 +605,27 @@ func (t *FuturesTrader) SetStopLoss(symbol string, positionSide string, quantity
 		Do(context.Background())
 
 	if err != nil {
+		// 检查是否是仓位方向不匹配错误
+		if strings.Contains(err.Error(), "position side does not match") {
+			// 尝试使用默认仓位方向（不指定PositionSide）
+			log.Printf("  ⚠️ 仓位方向不匹配，尝试使用默认仓位方向")
+			
+			_, err = t.client.NewCreateOrderService().
+				Symbol(symbol).
+				Side(side).
+				Type(futures.OrderTypeStopMarket).
+				StopPrice(fmt.Sprintf("%.8f", stopPrice)).
+				Quantity(quantityStr).
+				WorkingType(futures.WorkingTypeContractPrice).
+				ClosePosition(true).
+				Do(context.Background())
+			
+			if err != nil {
+				return fmt.Errorf("设置止损失败（包括默认仓位方向尝试）: %w", err)
+			}
+			log.Printf("  ✓ 止损价设置成功（使用默认仓位方向）: %.4f", stopPrice)
+			return nil
+		}
 		return fmt.Errorf("设置止损失败: %w", err)
 	}
 
@@ -643,6 +664,27 @@ func (t *FuturesTrader) SetTakeProfit(symbol string, positionSide string, quanti
 		Do(context.Background())
 
 	if err != nil {
+		// 检查是否是仓位方向不匹配错误
+		if strings.Contains(err.Error(), "position side does not match") {
+			// 尝试使用默认仓位方向（不指定PositionSide）
+			log.Printf("  ⚠️ 仓位方向不匹配，尝试使用默认仓位方向")
+			
+			_, err = t.client.NewCreateOrderService().
+				Symbol(symbol).
+				Side(side).
+				Type(futures.OrderTypeTakeProfitMarket).
+				StopPrice(fmt.Sprintf("%.8f", takeProfitPrice)).
+				Quantity(quantityStr).
+				WorkingType(futures.WorkingTypeContractPrice).
+				ClosePosition(true).
+				Do(context.Background())
+			
+			if err != nil {
+				return fmt.Errorf("设置止盈失败（包括默认仓位方向尝试）: %w", err)
+			}
+			log.Printf("  ✓ 止盈价设置成功（使用默认仓位方向）: %.4f", takeProfitPrice)
+			return nil
+		}
 		return fmt.Errorf("设置止盈失败: %w", err)
 	}
 
