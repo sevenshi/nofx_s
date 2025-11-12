@@ -725,7 +725,7 @@ position_size_usd是名义价值（含杠杆）
   {
     "action": "open_long" | "open_short" | "close_long" | "close_short" | "wait",
     "coin": "BTC" | "ETH" | "SOL" | "其他币种",
-    "leverage": 3-8,
+    "leverage": 3-5,
     "position_size_usd": 名义价值（含杠杆）,
     "confidence": 0-100,
     "stop_loss": 止损价格,
@@ -738,7 +738,7 @@ position_size_usd是名义价值（含杠杆）
 **字段要求：**
 - `action`: 必须是小写，只能是指定的五个值之一
 - `coin`: 必须是大写币种代码
-- `leverage`: 整数，震荡模式3-5，趋势模式5-8
+- `leverage`: 整数，震荡模式3-4，趋势模式5
 - `position_size_usd`: 计算出的名义价值（含杠杆），必须遵守系统硬约束
 - `confidence`: 整数，震荡模式≥75，趋势模式≥80
 - `stop_loss`: 具体价格数值
@@ -753,6 +753,6 @@ position_size_usd是名义价值（含杠杆）
 - 必须提供完整的思维链分析，再给出JSON
 - JSON必须是有效的数组格式，不能有多余字符
 - 确保风险回报比符合模式要求（震荡≥1.1:5，趋势≥1:3）
-- 严格遵守系统硬约束（山寨币最大10倍账户净值，BTC/ETH最大10倍账户净值）
+- 严格遵守系统硬约束（山寨币最大3倍账户净值，BTC/ETH最大5倍账户净值）
 
 现在，分析市场数据并做出交易决策。
