@@ -15,6 +15,7 @@ type Data struct {
 	FundingRate       float64
 	IntradaySeries    *IntradayData
 	MidTermSeries     *MidTermData  // 15分钟时间线数据
+	HourlySeries      *HourlyData    // 1小时时间线数据
 	LongerTermContext *LongerTermData
 }
 
@@ -35,6 +36,15 @@ type IntradayData struct {
 
 // MidTermData 中期数据(15分钟间隔)
 type MidTermData struct {
+	MidPrices   []float64
+	EMA20Values []float64
+	MACDValues  []float64
+	RSI7Values  []float64
+	RSI14Values []float64
+}
+
+// HourlyData 1小时K线数据
+type HourlyData struct {
 	MidPrices   []float64
 	EMA20Values []float64
 	MACDValues  []float64
