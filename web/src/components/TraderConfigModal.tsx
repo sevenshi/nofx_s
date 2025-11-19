@@ -52,7 +52,7 @@ export function TraderConfigModal({
     ai_model: '',
     exchange_id: '',
     btc_eth_leverage: 5,
-    altcoin_leverage: 3,
+    altcoin_leverage: 5,
     trading_symbols: '',
     custom_prompt: '',
     override_base_prompt: false,
@@ -60,8 +60,8 @@ export function TraderConfigModal({
     is_cross_margin: true,
     use_coin_pool: false,
     use_oi_top: false,
-    initial_balance: 1000,
-    scan_interval_minutes: 3,
+    initial_balance: 5000,
+    scan_interval_minutes: 5,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [availableCoins, setAvailableCoins] = useState<string[]>([]);
@@ -83,7 +83,7 @@ export function TraderConfigModal({
         ai_model: availableModels[0]?.id || '',
         exchange_id: availableExchanges[0]?.id || '',
         btc_eth_leverage: 5,
-        altcoin_leverage: 3,
+        altcoin_leverage: 5,
         trading_symbols: '',
         custom_prompt: '',
         override_base_prompt: false,
@@ -91,8 +91,8 @@ export function TraderConfigModal({
         is_cross_margin: true,
         use_coin_pool: false,
         use_oi_top: false,
-        initial_balance: 1000,
-        scan_interval_minutes: 3,
+        initial_balance: 5000,
+        scan_interval_minutes: 5,
       });
     }
     // 确保旧数据也有默认的 system_prompt_template
